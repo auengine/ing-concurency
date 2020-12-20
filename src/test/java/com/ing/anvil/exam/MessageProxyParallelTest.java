@@ -34,7 +34,7 @@ public class MessageProxyParallelTest
                 .nextInt(1000)))
 
         );
-        List items= messageProxy.stop();
+        List<IMessage> items= messageProxy.stop();
         assertTrue(items.size()==M_COUNT);
     }
 
@@ -56,12 +56,12 @@ public class MessageProxyParallelTest
 
         );
         LockSupport.parkNanos(1000);
-        List items= messageProxy.stop();
+        List<IMessage> items= messageProxy.stop();
         IntStream.range(0, M_COUNT).parallel().forEach(i ->
             messageProxy.send(new TextMessage("Message-P3-" + i), new NumberPriority(ThreadLocalRandom.current()
                 .nextInt(1000)))
         );
-        List items2= messageProxy.stop();
+        List<IMessage> items2= messageProxy.stop();
         assertTrue( M_COUNT== items2.size());
     }
 }

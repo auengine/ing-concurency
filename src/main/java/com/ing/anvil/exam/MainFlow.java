@@ -4,7 +4,6 @@ import com.ing.anvil.exam.impl.MessageProxy;
 import com.ing.anvil.exam.impl.MessageSender;
 import com.ing.anvil.exam.impl.NumberPriority;
 import com.ing.anvil.exam.impl.TextMessage;
-import javafx.util.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,13 +21,12 @@ public class MainFlow
         new MainFlow().test();
     }
 
-    public void test()
+    public void test() throws InterruptedException
     {
         IMessageSender messageSender = new MessageSender();
         IMessageProxy messageProxy = new MessageProxy();
         messageProxy.setMessageSender(messageSender);
         int threadCount = 10;
-        //ExecutorService executor = Executors.newFixedThreadPool(threadCount);
         try
         {
             //send a few before start
@@ -58,18 +56,18 @@ public class MainFlow
             {
                 threadList.get(i).join();
             }
-            List<Pair<IPriority, IMessage>> unsendPairs = messageProxy.stop();
-            //List<Pair<IPriority,IMessage>> unsendPairs = (List<Pair<IPriority,IMessage>>)unsend;
+            List<IMessage> unsendPairs = messageProxy.stop();
             logger.info("Number of unsend message is {}", unsendPairs);
             unsendPairs.stream().forEach(p ->
-                logger.info("Unsend details priority: {} message: {}",
-                    p.getKey().toString(),
-                    p.getValue().toString())
+                logger.info("Stop details message: {}",
+                    p.toString()
+                )
             );
         }
         catch (InterruptedException e)
         {
             logger.error("Interupted", e);
+            throw e;
         }
 
     }

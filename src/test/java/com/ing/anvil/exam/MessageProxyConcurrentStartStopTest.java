@@ -7,6 +7,8 @@ import com.ing.anvil.exam.impl.TextMessage;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,15 +23,16 @@ import java.util.stream.IntStream;
 import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("unchecked")
-public class MessageProxyConcurentStartStopTest
+public class MessageProxyConcurrentStartStopTest
 {
-    private IMessageProxy messageProxy;
+    private static final Logger logger = LoggerFactory.getLogger(MessageProxyConcurrentStartStopTest.class);
+    private MessageProxy messageProxy;
     private ExecutorService executor;
 
     @Before
     public void setUp() throws Exception
     {
-        executor = Executors.newFixedThreadPool(10);
+        executor = Executors.newFixedThreadPool(3);
         messageProxy = new MessageProxy();
         messageProxy.setMessageSender(new MessageSender());
     }
@@ -41,9 +44,9 @@ public class MessageProxyConcurentStartStopTest
     }
 
     @Test
-    public void test_concurent_start()
+    public void test_concurent_start() throws InterruptedException
     {
-        int M_COUNT = 1000;
+        int M_COUNT = 100;
         IntStream.range(0, M_COUNT).parallel().forEach(i ->
             executor.submit(new Runnable()
             {
@@ -54,6 +57,11 @@ public class MessageProxyConcurentStartStopTest
                 }
             })
         );
+        while (messageProxy.getActiveThreadCount()==0){
+            LockSupport.parkNanos(10);
+        }
+        Thread.sleep(100);
+        assertTrue(messageProxy.getActiveThreadCount()==1);
     }
 
     @Test
@@ -70,6 +78,8 @@ public class MessageProxyConcurentStartStopTest
                 }
             })
         );
+        assertTrue(messageProxy.getActiveThreadCount()==0);
+        assertTrue(messageProxy.getTotalCreatedThreadCount()==0);
     }
 
     @Test
@@ -101,7 +111,7 @@ public class MessageProxyConcurentStartStopTest
     @Test
     public void test_concurent_start_send_stop() throws InterruptedException
     {
-        int M_COUNT = 100;
+        int M_COUNT = 10;
         List<Future> futures = new ArrayList<>();
         final AtomicInteger startCount = new AtomicInteger(0);
         IntStream.range(0, M_COUNT).parallel().forEach(i ->
@@ -128,19 +138,19 @@ public class MessageProxyConcurentStartStopTest
                 }
             }))
         );
+        logger.info("Waiting futures!");
         for (Future<?> future : futures)
         {
+
             while (!future.isDone())
             {
-                LockSupport.parkNanos(100);
+                LockSupport.parkNanos(10);
             }
         }
+        logger.info("Futures done!");
+        assertTrue(messageProxy.getActiveThreadCount() < 2);
+        assertTrue(messageProxy.getTotalCreatedThreadCount() <= startCount.get());
 
-        if (messageProxy instanceof MessageProxy)
-        {
-            assertTrue(((MessageProxy)messageProxy).getActiveThreadCount() < 2);
-            assertTrue(((MessageProxy)messageProxy).getTotalCreatedThreadCount() <= startCount.get());
-        }
     }
 
 }

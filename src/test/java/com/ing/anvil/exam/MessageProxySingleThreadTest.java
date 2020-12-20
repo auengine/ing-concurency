@@ -8,7 +8,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 import static org.junit.Assert.assertTrue;
@@ -16,11 +15,12 @@ import static org.junit.Assert.assertTrue;
 @SuppressWarnings("unchecked")
 public class MessageProxySingleThreadTest
 {
-    private IMessageProxy messageProxy ;
+    private MessageProxy messageProxy;
 
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() throws Exception
+    {
         messageProxy = new MessageProxy();
         messageProxy.setMessageSender(new MessageSender());
     }
@@ -35,27 +35,29 @@ public class MessageProxySingleThreadTest
             }
         );
         Thread.sleep(1000);
-        List items= messageProxy.stop();
+        List<IMessage> items = messageProxy.stop();
     }
 
     @Test
     public void test_send_start_stop() throws InterruptedException
     {
-        IntStream.range(0, 100).forEach(i ->
+        int M_COUNT=100;
+        IntStream.range(0, M_COUNT).forEach(i ->
             {
                 messageProxy.send(new TextMessage("Message" + i), new NumberPriority(1));
             }
         );
         messageProxy.start();
-        Thread.sleep(1000);
-        List items= messageProxy.stop();
-        assertTrue(items.isEmpty());
+        Thread.sleep(100);
+        List<IMessage> items = messageProxy.stop();
+        assertTrue(
+            (messageProxy.getTotalProcessedMessageCount()+items.size())==M_COUNT);
     }
 
     @Test
     public void test_send_start_send_stop() throws InterruptedException
     {
-        int M_COUNT=100;
+        int M_COUNT = 100;
         IntStream.range(0, M_COUNT).forEach(i ->
             {
                 messageProxy.send(new TextMessage("Message" + i), new NumberPriority(1));
@@ -68,13 +70,13 @@ public class MessageProxySingleThreadTest
             }
         );
         Thread.sleep(1000);
-        List items= messageProxy.stop();
-        assertTrue(items.size()< M_COUNT *2 );
+        List<IMessage> items = messageProxy.stop();
+        assertTrue(items.size() < M_COUNT * 2);
     }
 
     public void test_send_start_send_stop_stop() throws InterruptedException
     {
-        int M_COUNT=100;
+        int M_COUNT = 100;
         IntStream.range(0, M_COUNT).forEach(i ->
             {
                 messageProxy.send(new TextMessage("Message" + i), new NumberPriority(1));
@@ -87,9 +89,9 @@ public class MessageProxySingleThreadTest
             }
         );
         Thread.sleep(1000);
-        List items= messageProxy.stop();
-        List items1= messageProxy.stop();
-       assertTrue(items.size()==items1.size());
+        List<IMessage> items = messageProxy.stop();
+        List<IMessage> items1 = messageProxy.stop();
+        assertTrue(items.size() == items1.size());
     }
 
 }
